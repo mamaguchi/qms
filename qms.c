@@ -205,10 +205,8 @@ void add_new_room(GtkWidget* wid, gpointer ptr)
     roomRowInfos[curSect]->rowStart++;
     roomRowInfos[curSect]->rowEnd++;
 
-    //g_signal_connect(delRoomBtn, "clicked", G_CALLBACK(del_room_row), 
-		    //&(roomRowInfos[curSect]->rowStart)); 
     g_signal_connect(delRoomBtn, "clicked", G_CALLBACK(del_room_row), 
-		    &rowStart); 
+		    NULL); 
 
 
     //gtk_container_remove(GTK_CONTAINER(vport), tbl);

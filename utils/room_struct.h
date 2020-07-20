@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
+#include <gtk/gtk.h>
 
 
 #define MAX_ROOM 10
@@ -33,22 +34,22 @@ uint8_t sectRoomItemCount[] = {0, 0, 0, 0, 0};
 
 uint8_t curSect = 0;
 
-Room* peekRoom(Room* section[])
+Room* peekRoom(Room* section[], uint8_t curSect, uint8_t sectRoomFront[])
 {
     return section[sectRoomFront[curSect]];
 }
 
-bool isRoomEmpty()
+bool isRoomEmpty(uint8_t curSect, uint8_t sectRoomItemCount[])
 {
     return sectRoomItemCount[curSect] == 0;
 }
 
-bool isRoomFull()
+bool isRoomFull(uint8_t curSect, uint8_t sectRoomItemCount[])
 {
     return sectRoomItemCount[curSect] == MAX_ROOM;
 }
 
-uint8_t sizeRoom()
+uint8_t sizeRoom(uint8_t curSect, uint8_t sectRoomItemCount[])
 {
     return sectRoomItemCount[curSect];
 }
@@ -66,7 +67,7 @@ uint8_t sizeRoom()
 
 void insertRoom(Room* section[][MAX_ROOM], Room* roomPtr)
 {
-    if(!isRoomFull()) {
+    if(!isRoomFull(curSect, sectRoomItemCount)) {
         if(sectRoomRear[curSect] == MAX_ROOM-1) {
 	    sectRoomRear[curSect] = -1;
 	}
@@ -74,6 +75,20 @@ void insertRoom(Room* section[][MAX_ROOM], Room* roomPtr)
 	sectRoomItemCount[curSect]++;
     }
 }
+
+
+//void insertRoom(Room section[][MAX_ROOM], Room roomPtr, uint8_t curSect,
+//		uint8_t sectRoomRear[], uint8_t sectRoomItemCount[])
+//{
+//    if(!isRoomFull(curSect, sectRoomItemCount)) {
+//        if(sectRoomRear[curSect] == MAX_ROOM-1) {
+//	    sectRoomRear[curSect] = -1;
+//	}
+//	section[curSect][++sectRoomRear[curSect]] = roomPtr;
+//	sectRoomItemCount[curSect]++;
+//    }
+//}
+
 
 Room* removeRoom(Room* section[])
 {

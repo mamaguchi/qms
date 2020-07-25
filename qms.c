@@ -16,6 +16,12 @@ GtkWidget* vport;
 // Rooms Table
 GtkWidget* tbl;
 
+// Vbox1 Widgets
+GtkWidget* newSection;
+GtkWidget* newRoom;
+GtkWidget* editRoom;
+GtkWidget* printTicketAuto;
+
 // Section
 GtkButton* sections[MAX_SECT];
 
@@ -51,6 +57,19 @@ void delay(int millisec)
 void close_program(GtkWidget *wid, gpointer ptr)
 {
     gtk_main_quit();
+}
+
+void send_key(GtkWidget* wid, gpointer entryPtr)
+{
+    if(strcmp(gtk_button_get_label(GTK_BUTTON(wid)),"<-")==0) {
+        int txtLen = gtk_entry_get_text_length(GTK_ENTRY(entryPtr));
+	gtk_editable_delete_text(GTK_EDITABLE(entryPtr),
+		    txtLen-1, -1);
+	return;
+    }    
+    int pos = -1;
+    gtk_editable_insert_text(GTK_EDITABLE(entryPtr),
+		    gtk_button_get_label(GTK_BUTTON(wid)),1,&pos);
 }
 
 void clear_tbl(GtkWidget* wid, gpointer ptr)
@@ -103,59 +122,6 @@ void reprint_rooms_tbl()
     gtk_widget_show_all(tbl);
 }
 
-void reprint_rooms_tbl2(uint8_t remainingRows)
-{
-    GList* roomLst = gtk_container_get_children(GTK_CONTAINER(roomsOfSect2[curSect]));
-
-    //gtk_container_foreach(GTK_CONTAINER(roomsOfSect2[curSect]), clear_tbl, NULL);
-    gtk_container_forall(GTK_CONTAINER(roomsOfSect2[curSect]), clear_tbl, NULL);
-
-    //roomRowInfos[curSect]->rowStart = remainingRows;
-    //roomRowInfos[curSect]->rowEnd = remainingRows+1;
-
-    //int8_t rowStart = remainingRows-1;
-    //int8_t rowEnd = remainingRows;
-    
-    uint8_t rowStart = 0;
-    uint8_t rowEnd = 1;
-
-    while(1) {
-
-	gpointer printTicket = roomLst->data;
-	gtk_table_attach(GTK_TABLE(roomsOfSect2[curSect]), printTicket, 5,6,rowStart,rowEnd, GTK_EXPAND|GTK_FILL, GTK_SHRINK, 0,0);
-	roomLst = roomLst->next;
-
-        gpointer decrSeqBtn = roomLst->data;
-	gtk_table_attach(GTK_TABLE(roomsOfSect2[curSect]), decrSeqBtn, 4,5,rowStart,rowEnd, GTK_EXPAND|GTK_FILL, GTK_SHRINK, 0,0);
-	roomLst = roomLst->next;
-
-        gpointer seqNum = roomLst->data;
-    	gtk_table_attach(GTK_TABLE(roomsOfSect2[curSect]), seqNum, 3,4,rowStart,rowEnd, GTK_EXPAND|GTK_FILL, GTK_SHRINK, 0,0);
-	roomLst = roomLst->next;
-
-        gpointer delRoomBtn = roomLst->data;
-    	gtk_table_attach(GTK_TABLE(roomsOfSect2[curSect]), delRoomBtn, 2,3,rowStart,rowEnd, GTK_EXPAND|GTK_FILL, GTK_SHRINK, 0,0);
-	roomLst = roomLst->next;
-
-	gpointer roomNum = roomLst->data;
-    	gtk_table_attach(GTK_TABLE(roomsOfSect2[curSect]), roomNum, 0,2,rowStart,rowEnd, GTK_EXPAND|GTK_FILL, GTK_SHRINK, 0,0);
-		
-	//rowStart--;
-	//rowEnd--;
-        rowStart++;
-	rowEnd++;
-
-        if(!roomLst->next) break;
-	roomLst = roomLst->next;
-    }
-    roomRowInfos[curSect]->rowStart = rowStart;
-    roomRowInfos[curSect]->rowEnd = rowEnd;
-    
-    gtk_widget_show_all(roomsOfSect2[curSect]);
-
-    g_list_free(roomLst);
-}
-
 void del_room_row(GtkWidget* wid, gpointer ptr)
 {
     GList* roomLst = gtk_container_get_children(GTK_CONTAINER(roomsOfSect2[curSect]));
@@ -175,6 +141,7 @@ void del_room_row(GtkWidget* wid, gpointer ptr)
     int rowToDelIdx = (totalRowNum-1) - rowToDelRvrsIdx;
     uint8_t rowStart = 0;
     uint8_t rowEnd = 1;
+    
     for(int i=0;i<totalRowNum;i++) {
         if(i==rowToDelIdx) {
     	    for(guint n=0;n<5;n++) {
@@ -182,47 +149,151 @@ void del_room_row(GtkWidget* wid, gpointer ptr)
                 gtk_widget_destroy(GTK_WIDGET(roomRow->data));
     	    }
 	} else {
-	    
             int firstCellInRowRvrsIdx = (totalRowNum*5-1) - (i*5);
             GList* roomNum = g_list_nth(roomLst, firstCellInRowRvrsIdx);
+            g_object_ref(roomNum->data);
+	    gtk_container_remove(GTK_CONTAINER(roomsOfSect2[curSect]), GTK_WIDGET(roomNum->data));
             gtk_table_attach(GTK_TABLE(newTbl), GTK_WIDGET(roomNum->data), 0,2,rowStart,rowEnd, GTK_EXPAND|GTK_FILL, GTK_SHRINK, 0,0);
 
-            firstCellInRowRvrsIdx = (totalRowNum*5-1) - ((i-1)*5);
+            firstCellInRowRvrsIdx = (totalRowNum*5-1) - (i*5) - 1;
             GList* delRoomBtn = g_list_nth(roomLst, firstCellInRowRvrsIdx);
+            g_object_ref(delRoomBtn->data);
+	    gtk_container_remove(GTK_CONTAINER(roomsOfSect2[curSect]), GTK_WIDGET(delRoomBtn->data));
             gtk_table_attach(GTK_TABLE(newTbl), GTK_WIDGET(delRoomBtn->data), 2,3,rowStart,rowEnd, GTK_EXPAND|GTK_FILL, GTK_SHRINK, 0,0);
 
-	    firstCellInRowRvrsIdx = (totalRowNum*5-1) - ((i-2)*5);
+	    firstCellInRowRvrsIdx = (totalRowNum*5-1) - (i*5) - 2;
             GList* seqNum = g_list_nth(roomLst, firstCellInRowRvrsIdx);
+            g_object_ref(seqNum->data);
+	    gtk_container_remove(GTK_CONTAINER(roomsOfSect2[curSect]), GTK_WIDGET(seqNum->data));
             gtk_table_attach(GTK_TABLE(newTbl), GTK_WIDGET(seqNum->data), 3,4,rowStart,rowEnd, GTK_EXPAND|GTK_FILL, GTK_SHRINK, 0,0);
             
-            firstCellInRowRvrsIdx = (totalRowNum*5-1) - ((i-3)*5);
+            firstCellInRowRvrsIdx = (totalRowNum*5-1) - (i*5) - 3;
             GList* decrSeqBtn = g_list_nth(roomLst, firstCellInRowRvrsIdx);
+            g_object_ref(decrSeqBtn->data);
+	    gtk_container_remove(GTK_CONTAINER(roomsOfSect2[curSect]), GTK_WIDGET(decrSeqBtn->data));
 	    gtk_table_attach(GTK_TABLE(newTbl), GTK_WIDGET(decrSeqBtn->data), 4,5,rowStart,rowEnd, GTK_EXPAND|GTK_FILL, GTK_SHRINK, 0,0);
             
-            firstCellInRowRvrsIdx = (totalRowNum*5-1) - ((i-4)*5);
+            firstCellInRowRvrsIdx = (totalRowNum*5-1) - (i*5) - 4;
             GList* printTicket = g_list_nth(roomLst, firstCellInRowRvrsIdx);
+            g_object_ref(printTicket->data);
+	    gtk_container_remove(GTK_CONTAINER(roomsOfSect2[curSect]), GTK_WIDGET(printTicket->data));
 	    gtk_table_attach(GTK_TABLE(newTbl), GTK_WIDGET(printTicket->data), 5,6,rowStart,rowEnd, GTK_EXPAND|GTK_FILL, GTK_SHRINK, 0,0);
 
             rowStart++;
             rowEnd++;
 
-            g_signal_connect(delRoomBtn, "clicked", G_CALLBACK(del_room_row), NULL); 
+            g_signal_connect(delRoomBtn->data, "clicked", G_CALLBACK(del_room_row), NULL); 
 	}
     }
 
     roomRowInfos[curSect]->rowStart = rowStart;
     roomRowInfos[curSect]->rowEnd = rowEnd;
     
-    gtk_container_forall(GTK_CONTAINER(roomsOfSect2[curSect]), clear_tbl_perma, NULL);
-    gtk_widget_destroy(roomsOfSect2[curSect]);
+    gtk_container_remove(GTK_CONTAINER(vport), roomsOfSect2[curSect]); 
+
     roomsOfSect2[curSect] = newTbl;
+    gtk_container_add(GTK_CONTAINER(vport), roomsOfSect2[curSect]); 
     gtk_widget_show_all(roomsOfSect2[curSect]);
 
     g_list_free(roomLst);
+}
 
-    //uint8_t remainingRows = roomRowInfos[curSect]->rowStart - 1;
-    //if(remainingRows==0) return; //no more rows,so exit function.
-    //reprint_rooms_tbl2(remainingRows);
+void toggle_edit_room_button(GtkWidget* wid, gpointer ptr)
+{
+    if(gtk_widget_get_sensitive(GTK_WIDGET(editRoom))) {
+        gtk_widget_set_sensitive(GTK_WIDGET(editRoom), FALSE);
+    } else {
+        gtk_widget_set_sensitive(GTK_WIDGET(editRoom), TRUE);
+    }
+}
+
+void edit_seq_num(GtkWidget* wid, gpointer ptr)
+{
+    const char* seqNumStr = gtk_entry_get_text(GTK_ENTRY(ptr));
+    if(strcmp(seqNumStr, "\0")==0 || strcmp(seqNumStr, "0\0")==0) return;
+
+    GtkWidget* dlg = gtk_dialog_new_with_buttons(
+		    "",
+		    GTK_WINDOW(win),
+		    GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+		    "No", 0, "Yes", 1, NULL);
+
+    GtkWidget* lbl = gtk_label_new("Are you sure to decrease sequence by 1?");
+
+    GtkWidget* entry = gtk_entry_new();
+    //gtk_entry_set_max_length(GTK_ENTRY(entry), 5);
+    //gtk_entry_set_text(GTK_ENTRY(entry), seqNumStr);
+
+    // Create a virtual keyboard
+    GtkWidget* keybdTbl = gtk_table_new(4, 10, FALSE);
+    for(int row=0;row<4;row++) {
+        for(int col=0;col<10;col++) {
+            GtkWidget* key = gtk_button_new_with_label(keyboard[row][col]);
+            gtk_widget_set_size_request(key, 70, 50);
+
+	    gtk_table_attach(GTK_TABLE(keybdTbl), key, col,col+1, 
+	        row,row+1, GTK_EXPAND|GTK_FILL, GTK_SHRINK, 0,0);
+
+	    g_signal_connect(key,"clicked",G_CALLBACK(send_key),entry);
+	}
+    }
+
+    GtkWidget* dlgVbox = gtk_vbox_new(FALSE, 5);
+
+    gtk_box_pack_start(GTK_BOX(dlgVbox), lbl, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(dlgVbox), keybdTbl, FALSE, FALSE, 0);
+
+    gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area(
+				    GTK_DIALOG(dlg))), dlgVbox);
+
+    gtk_widget_show_all(dlgVbox);
+
+    int result = gtk_dialog_run(GTK_DIALOG(dlg));
+    if(result == 0) {
+        gtk_widget_destroy(dlg);
+        return; //user clicked 'No' btn.
+    } else {
+        int seqNumInt = atoi(seqNumStr);
+        seqNumInt--;
+        char strBuf[10];
+        sprintf(strBuf, "%d", seqNumInt);
+        gtk_entry_set_text(GTK_ENTRY(ptr), strBuf);
+
+        gtk_widget_destroy(dlg);
+    }
+}
+
+void decr_seq_num(GtkWidget* wid, gpointer ptr)
+{
+    const char* seqNumStr = gtk_entry_get_text(GTK_ENTRY(ptr));
+    if(strcmp(seqNumStr, "\0")==0 || strcmp(seqNumStr, "0\0")==0) return;
+
+    GtkWidget* dlg = gtk_dialog_new_with_buttons(
+		    "",
+		    GTK_WINDOW(win),
+		    GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+		    "Yes", 1, "No", 0, NULL);
+
+    GtkWidget* lbl = gtk_label_new("Are you sure to decrease sequence by 1?");
+
+    gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area(
+				    GTK_DIALOG(dlg))), lbl);
+
+    gtk_widget_show_all(lbl);
+
+    int result = gtk_dialog_run(GTK_DIALOG(dlg));
+    if(result == 0) {
+        gtk_widget_destroy(dlg);
+        return; //user clicked 'No' btn.
+    } else {
+        int seqNumInt = atoi(seqNumStr);
+        seqNumInt--;
+        char strBuf[10];
+        sprintf(strBuf, "%d", seqNumInt);
+        gtk_entry_set_text(GTK_ENTRY(ptr), strBuf);
+
+        gtk_widget_destroy(dlg);
+    }
 }
 
 void add_new_room(GtkWidget* wid, gpointer ptr)
@@ -286,6 +357,12 @@ void add_new_room(GtkWidget* wid, gpointer ptr)
     gtk_widget_set_size_request(seqNum, -1, 100);
     gtk_widget_set_size_request(decrSeqBtn, -1, 100);
     gtk_widget_set_size_request(printTicket, -1, 100);
+
+    //gtk_editable_set_editable(GTK_EDITABLE(seqNum), FALSE); //WORKED to disable editability
+    //gtk_widget_set_sensitive(GTK_WIDGET(roomNum), TRUE);
+    //gtk_widget_set_sensitive(GTK_WIDGET(seqNum), TRUE);
+    //gtk_widget_set_sensitive(GTK_WIDGET(printTicket), FALSE);
+    //gtk_widget_set_sensitive(GTK_WIDGET(editRoom), TRUE);
     
     uint8_t rowStart = roomRowInfos[curSect]->rowStart;
     uint8_t rowEnd = roomRowInfos[curSect]->rowEnd;
@@ -304,26 +381,13 @@ void add_new_room(GtkWidget* wid, gpointer ptr)
     roomRowInfos[curSect]->rowStart++;
     roomRowInfos[curSect]->rowEnd++;
 
-    g_signal_connect(delRoomBtn, "clicked", G_CALLBACK(del_room_row), 
-		    NULL); 
+    g_signal_connect(delRoomBtn, "clicked", G_CALLBACK(del_room_row), NULL); 
+    g_signal_connect(decrSeqBtn, "clicked", G_CALLBACK(decr_seq_num), seqNum); 
 
 
     //gtk_container_remove(GTK_CONTAINER(vport), tbl);
     //gtk_container_add(GTK_CONTAINER(vport), roomsOfSect2[curSect]);
     gtk_widget_show_all(roomsOfSect2[curSect]);
-}
-
-void send_key(GtkWidget* wid, gpointer entryPtr)
-{
-    if(strcmp(gtk_button_get_label(GTK_BUTTON(wid)),"<-")==0) {
-        int txtLen = gtk_entry_get_text_length(GTK_ENTRY(entryPtr));
-	gtk_editable_delete_text(GTK_EDITABLE(entryPtr),
-		    txtLen-1, -1);
-	return;
-    }    
-    int pos = -1;
-    gtk_editable_insert_text(GTK_EDITABLE(entryPtr),
-		    gtk_button_get_label(GTK_BUTTON(wid)),1,&pos);
 }
 
 void update_cur_sect(GtkWidget* wid, gpointer ptr)
@@ -470,10 +534,14 @@ void main(int argc, char *argv[])
     gtk_container_add(GTK_CONTAINER(vport), roomsOfSect2[curSect]);
     //GtkWidget* tbl = (GtkWidget*)gtk_builder_get_object(builder, "table1");
     //tbl = (GtkWidget*)gtk_builder_get_object(builder, "table1");
-    GtkWidget* newSection = (GtkWidget*)gtk_builder_get_object(builder, "newSection");
-    GtkWidget* newRoom = (GtkWidget*)gtk_builder_get_object(builder, "newRoom");
-    GtkWidget* editRoom = (GtkWidget*)gtk_builder_get_object(builder, "editRoom");
-    GtkWidget* printTicketAuto = (GtkWidget*)gtk_builder_get_object(builder, "printTicketAuto");
+    //GtkWidget* newSection = (GtkWidget*)gtk_builder_get_object(builder, "newSection");
+    newSection = (GtkWidget*)gtk_builder_get_object(builder, "newSection");
+    //GtkWidget* newRoom = (GtkWidget*)gtk_builder_get_object(builder, "newRoom");
+    newRoom = (GtkWidget*)gtk_builder_get_object(builder, "newRoom");
+    //GtkWidget* editRoom = (GtkWidget*)gtk_builder_get_object(builder, "editRoom");
+    editRoom = (GtkWidget*)gtk_builder_get_object(builder, "editRoom");
+    //GtkWidget* printTicketAuto = (GtkWidget*)gtk_builder_get_object(builder, "printTicketAuto");
+    printTicketAuto = (GtkWidget*)gtk_builder_get_object(builder, "printTicketAuto");
 
     // Debug Label Widget
     debugLbl = gtk_label_new("Debugging Label");
@@ -501,7 +569,9 @@ void main(int argc, char *argv[])
     //g_signal_connect(newRoom, "clicked", G_CALLBACK(add_new_room), tbl);
     g_signal_connect(newRoom, "clicked", G_CALLBACK(add_new_room), NULL);
     g_signal_connect(newSection, "clicked", G_CALLBACK(add_new_section), vbox3);
+    //g_signal_connect(editRoom, "clicked", G_CALLBACK(toggle_edit_room_button), NULL);
      
+    
     gtk_widget_show_all(win);
     gtk_main();
 }

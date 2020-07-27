@@ -32,6 +32,7 @@ GtkButton* sections[MAX_SECT];
 
 // Debug Label
 GtkWidget* debugLbl;
+GtkWidget* hiddenEntry;
 
 // Room
 //Room* roomsOfSect[MAX_ROOM];
@@ -207,22 +208,19 @@ void toggle_edit_room_button(GtkWidget* wid, gpointer ptr)
     }
 }
 
-void edit_seq_num(GtkWidget* wid, gpointer ptr)
+void edit_room_num(GtkWidget* wid, gpointer ptr)
 {
-    const char* seqNumStr = gtk_entry_get_text(GTK_ENTRY(ptr));
-    if(strcmp(seqNumStr, "\0")==0 || strcmp(seqNumStr, "0\0")==0) return;
+    const char* seqNumStr = gtk_entry_get_text(GTK_ENTRY(wid));
 
     GtkWidget* dlg = gtk_dialog_new_with_buttons(
 		    "",
 		    GTK_WINDOW(win),
 		    GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-		    "No", 0, "Yes", 1, NULL);
-
-    GtkWidget* lbl = gtk_label_new("Are you sure to decrease sequence by 1?");
-
+		    "Yes", 1, "No", 0, NULL);
+    
     GtkWidget* entry = gtk_entry_new();
-    //gtk_entry_set_max_length(GTK_ENTRY(entry), 5);
-    //gtk_entry_set_text(GTK_ENTRY(entry), seqNumStr);
+    gtk_entry_set_max_length(GTK_ENTRY(entry), 5);
+    gtk_entry_set_text(GTK_ENTRY(entry), seqNumStr);
 
     // Create a virtual keyboard
     GtkWidget* keybdTbl = gtk_table_new(4, 10, FALSE);
@@ -240,7 +238,7 @@ void edit_seq_num(GtkWidget* wid, gpointer ptr)
 
     GtkWidget* dlgVbox = gtk_vbox_new(FALSE, 5);
 
-    gtk_box_pack_start(GTK_BOX(dlgVbox), lbl, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(dlgVbox), entry, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(dlgVbox), keybdTbl, FALSE, FALSE, 0);
 
     gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area(
@@ -250,17 +248,91 @@ void edit_seq_num(GtkWidget* wid, gpointer ptr)
 
     int result = gtk_dialog_run(GTK_DIALOG(dlg));
     if(result == 0) {
-        gtk_widget_destroy(dlg);
-        return; //user clicked 'No' btn.
+	//do nothing
     } else {
-        int seqNumInt = atoi(seqNumStr);
-        seqNumInt--;
-        char strBuf[10];
-        sprintf(strBuf, "%d", seqNumInt);
-        gtk_entry_set_text(GTK_ENTRY(ptr), strBuf);
+        const char* userInput = gtk_entry_get_text(GTK_ENTRY(entry));
+        gtk_entry_set_text(GTK_ENTRY(wid), userInput);
 
-        gtk_widget_destroy(dlg);
+	//TODO:
+	//GdkColor color;
+        //gdk_color_parse("#ff0000", &color); //red color
+        //gtk_widget_modify_fg(wid, GTK_STATE_NORMAL, &color);
+
     }
+
+    gtk_widget_destroy(dlg);
+    gtk_window_set_focus(GTK_WINDOW(win), GTK_WIDGET(hiddenEntry));
+}
+
+void edit_seq_num(GtkWidget* wid, gpointer ptr)
+{
+    const char* seqNumStr = gtk_entry_get_text(GTK_ENTRY(wid));
+
+    GtkWidget* dlg = gtk_dialog_new_with_buttons(
+		    "",
+		    GTK_WINDOW(win),
+		    GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+		    "Yes", 1, "No", 0, NULL);
+
+    GtkWidget* lbl = gtk_label_new("");
+    GdkColor color;
+    gdk_color_parse("#ff0000", &color); //red color
+    gtk_widget_modify_fg(lbl, GTK_STATE_NORMAL, &color);
+
+    GtkWidget* entry = gtk_entry_new();
+    gtk_entry_set_max_length(GTK_ENTRY(entry), 5);
+    gtk_entry_set_text(GTK_ENTRY(entry), seqNumStr);
+
+    // Create a virtual keyboard
+    GtkWidget* keybdTbl = gtk_table_new(4, 10, FALSE);
+    for(int row=0;row<4;row++) {
+        for(int col=0;col<10;col++) {
+            GtkWidget* key = gtk_button_new_with_label(keyboard[row][col]);
+            gtk_widget_set_size_request(key, 70, 50);
+
+	    gtk_table_attach(GTK_TABLE(keybdTbl), key, col,col+1, 
+	        row,row+1, GTK_EXPAND|GTK_FILL, GTK_SHRINK, 0,0);
+
+	    g_signal_connect(key,"clicked",G_CALLBACK(send_key),entry);
+	}
+    }
+
+    GtkWidget* dlgVbox = gtk_vbox_new(FALSE, 5);
+
+    gtk_box_pack_start(GTK_BOX(dlgVbox), entry, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(dlgVbox), keybdTbl, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(dlgVbox), lbl, FALSE, FALSE, 0);
+
+    gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area(
+				    GTK_DIALOG(dlg))), dlgVbox);
+
+    gtk_widget_show_all(dlgVbox);
+
+    while(1) {
+        int result = gtk_dialog_run(GTK_DIALOG(dlg));
+        if(result == 0) {
+	    break;
+        } else {
+	    const char* userInput = gtk_entry_get_text(GTK_ENTRY(entry));
+	    int goNextLoop = 0;
+	    int p = 0;
+            while(userInput[p]) {
+	        if(!g_ascii_isdigit(userInput[p])) {
+		    gtk_label_set_text(GTK_LABEL(lbl), "Sequence must be numeric digit only!");
+		    goNextLoop = 1;
+		    break;
+	        }
+	        p++;
+	    }
+	    if(goNextLoop) continue;
+
+            gtk_entry_set_text(GTK_ENTRY(wid), userInput);
+	    break;
+        }
+    }
+
+    gtk_widget_destroy(dlg);
+    gtk_window_set_focus(GTK_WINDOW(win), GTK_WIDGET(hiddenEntry));
 }
 
 void decr_seq_num(GtkWidget* wid, gpointer ptr)
@@ -346,6 +418,24 @@ void add_new_room(GtkWidget* wid, gpointer ptr)
     ////////////////////////
     /* 2nd Implementation */
 
+    if(getSectItemCount() == 0) {
+        GtkWidget* dlg = gtk_dialog_new_with_buttons(
+	    	        "",
+		        GTK_WINDOW(win),
+		        GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+		        "OK", 1, NULL);
+
+        GtkWidget* lbl = gtk_label_new("Add a new section first");
+
+        gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area(
+				    GTK_DIALOG(dlg))), lbl);
+
+        gtk_widget_show_all(lbl);
+        gtk_dialog_run(GTK_DIALOG(dlg));
+        gtk_widget_destroy(dlg);
+	return;
+    }
+
     GtkWidget* roomNum = gtk_entry_new();
     GtkWidget* delRoomBtn = gtk_button_new_with_label("Del");
     GtkWidget* seqNum = gtk_entry_new();
@@ -383,7 +473,8 @@ void add_new_room(GtkWidget* wid, gpointer ptr)
 
     g_signal_connect(delRoomBtn, "clicked", G_CALLBACK(del_room_row), NULL); 
     g_signal_connect(decrSeqBtn, "clicked", G_CALLBACK(decr_seq_num), seqNum); 
-
+    g_signal_connect(roomNum, "focus-in-event", G_CALLBACK(edit_room_num), NULL); 
+    g_signal_connect(seqNum, "focus-in-event", G_CALLBACK(edit_seq_num), NULL); 
 
     //gtk_container_remove(GTK_CONTAINER(vport), tbl);
     //gtk_container_add(GTK_CONTAINER(vport), roomsOfSect2[curSect]);
@@ -493,11 +584,15 @@ void add_new_section(GtkWidget* wid, gpointer ptr)
     gtk_widget_destroy(dlg);
 
     gtk_widget_show_all(vbox3);
+
+    update_cur_sect(sect, NULL);
 }
 
 void main(int argc, char *argv[])
 {
     gtk_init(&argc, &argv);
+
+    gtk_rc_parse("gtkrc");
 
     roomsOfSect2[0] = gtk_table_new(10,7,FALSE);
     roomsOfSect2[1] = gtk_table_new(10,7,FALSE);
@@ -546,7 +641,11 @@ void main(int argc, char *argv[])
     // Debug Label Widget
     debugLbl = gtk_label_new("Debugging Label");
     gtk_box_pack_start(GTK_BOX(vbox1), debugLbl, FALSE, FALSE, 0);
-    
+
+    // Hidden Entry
+    hiddenEntry = gtk_entry_new();
+    gtk_box_pack_start(GTK_BOX(vbox1), hiddenEntry, FALSE, FALSE, 0);
+
     //Initialize Room Row Info for Each Section 
     RoomRowInfo rowInfoSect1 = {0,1};
     RoomRowInfo rowInfoSect2 = {0,1};
@@ -573,5 +672,6 @@ void main(int argc, char *argv[])
      
     
     gtk_widget_show_all(win);
+    gtk_widget_hide(GTK_WIDGET(hiddenEntry));
     gtk_main();
 }

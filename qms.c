@@ -26,6 +26,7 @@ GtkWidget* printTicketAuto;
 GtkButton* sections[MAX_SECT];
 
 // Debug Label
+//TODO:To remove debugLbl in production
 GtkWidget* debugLbl;
 GtkWidget* hiddenEntry;
 
@@ -34,8 +35,6 @@ Room* roomsOfSect[MAX_SECT][MAX_ROOM];
 GtkWidget* roomsOfSect2[MAX_SECT];
 RoomRowInfo* roomRowInfos[5];
 uint8_t roomPrintTicketInfos[5];
-
-
 /************************/
 
 
@@ -234,6 +233,7 @@ void edit_room_num(GtkWidget* wid, gpointer ptr)
     gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area(
 				    GTK_DIALOG(dlg))), dlgVbox);
 
+    gtk_window_set_type_hint(GTK_WINDOW(dlg), GDK_WINDOW_TYPE_HINT_TOOLBAR);
     gtk_widget_show_all(dlgVbox);
 
     int result = gtk_dialog_run(GTK_DIALOG(dlg));
@@ -290,6 +290,7 @@ void edit_seq_num(GtkWidget* wid, gpointer ptr)
     gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area(
 				    GTK_DIALOG(dlg))), dlgVbox);
 
+    gtk_window_set_type_hint(GTK_WINDOW(dlg), GDK_WINDOW_TYPE_HINT_TOOLBAR);
     gtk_widget_show_all(dlgVbox);
 
     while(1) {
@@ -335,6 +336,7 @@ void decr_seq_num(GtkWidget* wid, gpointer ptr)
     gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area(
 				    GTK_DIALOG(dlg))), lbl);
 
+    gtk_window_set_type_hint(GTK_WINDOW(dlg), GDK_WINDOW_TYPE_HINT_TOOLBAR);
     gtk_widget_show_all(lbl);
 
     int result = gtk_dialog_run(GTK_DIALOG(dlg));
@@ -370,6 +372,9 @@ void add_new_room(GtkWidget* wid, gpointer ptr)
         gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area(
 				    GTK_DIALOG(dlg))), lbl);
 
+        //gtk_window_set_decorated(GTK_WINDOW(dlg), FALSE); /* remove titlebar & window decorations */
+	//gtk_window_set_type_hint(GTK_WINDOW(dlg), GDK_WINDOW_TYPE_HINT_MENU);/* same effect as TOOLBAR */
+	gtk_window_set_type_hint(GTK_WINDOW(dlg), GDK_WINDOW_TYPE_HINT_TOOLBAR);
         gtk_widget_show_all(lbl);
         gtk_dialog_run(GTK_DIALOG(dlg));
         gtk_widget_destroy(dlg);
@@ -492,6 +497,7 @@ void update_cur_sect(GtkWidget* wid, gpointer ptr)
                 GtkWidget* lbl = gtk_label_new("Delete this section?");
                 gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area(
 				        GTK_DIALOG(dlg))), lbl);
+	        gtk_window_set_type_hint(GTK_WINDOW(dlg), GDK_WINDOW_TYPE_HINT_TOOLBAR);
                 gtk_widget_show_all(lbl);
                 int result = gtk_dialog_run(GTK_DIALOG(dlg));
                 if(result == 0) {
@@ -541,8 +547,6 @@ void update_cur_sect(GtkWidget* wid, gpointer ptr)
                 gtk_widget_show_all(roomsOfSect2[curSect]);
 	        break;
             }
-
-            
 	}
     }
 
@@ -598,6 +602,7 @@ void add_new_section(GtkWidget* wid, gpointer ptr)
     gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area(
 				    GTK_DIALOG(dlg))), dlgVbox);
 
+    gtk_window_set_type_hint(GTK_WINDOW(dlg), GDK_WINDOW_TYPE_HINT_TOOLBAR);
     gtk_widget_show_all(dlgVbox);
 
     int result = gtk_dialog_run(GTK_DIALOG(dlg));
@@ -724,7 +729,9 @@ void main(int argc, char *argv[])
     g_signal_connect(printTicketAuto, "clicked", G_CALLBACK(print_ticket_auto), NULL);
     g_signal_connect(delSection, "clicked", G_CALLBACK(toggle_del_section_btn), NULL);
      
+    gtk_window_set_decorated(GTK_WINDOW(win), FALSE); /* remove titlebar & window decorations */
     gtk_widget_show_all(win);
     gtk_widget_hide(GTK_WIDGET(hiddenEntry));
+    gtk_window_fullscreen(GTK_WINDOW(win));
     gtk_main();
 }

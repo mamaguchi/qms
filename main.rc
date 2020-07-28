@@ -10,6 +10,7 @@ style "default" {
   xthickness = 1
   ythickness = 1
 
+  # Patrick Modification - 27July2020
   font_name    = "DejaVuSans 16"
 
   ####################

@@ -46,9 +46,9 @@ Room</property>
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="editRoom">
-                <property name="label" translatable="yes">Edit
-Room</property>
+              <object class="GtkButton" id="delSection">
+                <property name="label" translatable="yes">Delete
+Section</property>
                 <property name="height_request">100</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -59,6 +59,9 @@ Room</property>
                 <property name="fill">False</property>
                 <property name="position">2</property>
               </packing>
+            </child>
+            <child>
+              <placeholder/>
             </child>
             <child>
               <placeholder/>

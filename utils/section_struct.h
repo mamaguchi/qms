@@ -65,3 +65,26 @@ GtkButton* removeSect(GtkButton* section[])
     sectItemCount--;
     return sectBtn;
 }
+
+void removeSectByIdx(GtkButton* section[], uint8_t n)
+{
+    uint8_t newCount = --sectItemCount;
+    GtkButton* newSection[newCount];
+    uint8_t newCtr = 0;
+
+    for(uint8_t i=0;i<=sectItemCount;i++) {
+        if(i==n) {
+            gtk_widget_destroy(GTK_WIDGET(section[n]));
+	} else {
+            newSection[newCtr] = section[i];
+	    section[i] = NULL;
+	    newCtr++;
+	}
+    }
+    sectRear = -1;
+    sectFront = 0;
+
+    //return newSection; /* Error: assignment to expression with array type */
+    //section = newSection; /* Error: assignment to expression with array type */
+    memmove(section, newSection, sizeof(GtkButton*) * sectItemCount); /* Correct */
+}

@@ -24,17 +24,21 @@ GtkWidget* printTicketAuto;
 
 // Section
 GtkButton* sections[MAX_SECT];
+//uint8_t curSect = 0;
 
 // Debug Label
 GtkWidget* debugLbl;
 GtkWidget* hiddenEntry;
 
 // Room
+//Room* roomsOfSect[MAX_ROOM];
 Room* roomsOfSect[MAX_SECT][MAX_ROOM];
 GtkWidget* roomsOfSect2[MAX_SECT];
 RoomRowInfo* roomRowInfos[5];
 uint8_t roomPrintTicketInfos[5];
 
+// Image Assets
+//GtkWidget* sectImg;
 
 /************************/
 
@@ -67,13 +71,13 @@ void send_key(GtkWidget* wid, gpointer entryPtr)
 void clear_tbl(GtkWidget* wid, gpointer ptr)
 {
     g_object_ref(wid);
+    //gtk_container_remove(GTK_CONTAINER(tbl), wid);
     gtk_container_remove(GTK_CONTAINER(roomsOfSect2[curSect]), wid);
 }
 
 void clear_tbl_perma(GtkWidget* wid, gpointer ptr)
 {
-    //gtk_container_remove(GTK_CONTAINER(roomsOfSect2[curSect]), wid);
-    gtk_container_remove(GTK_CONTAINER(ptr), wid);
+    gtk_container_remove(GTK_CONTAINER(roomsOfSect2[curSect]), wid);
 }
 
 
@@ -86,6 +90,8 @@ void reprint_rooms_tbl()
     //gtk_table_set_row_spacings(GTK_TABLE(tbl), 50);
     //gtk_table_set_col_spacings(GTK_TABLE(tbl), 1);
     
+    //uint8_t rowStart = roomRowInfos[curSect]->rowStart;
+    //uint8_t rowEnd = roomRowInfos[curSect]->rowEnd;
     uint8_t rowStart = 0;
     uint8_t rowEnd = 1;
 
@@ -242,6 +248,12 @@ void edit_room_num(GtkWidget* wid, gpointer ptr)
     } else {
         const char* userInput = gtk_entry_get_text(GTK_ENTRY(entry));
         gtk_entry_set_text(GTK_ENTRY(wid), userInput);
+
+	//TODO:
+	//GdkColor color;
+        //gdk_color_parse("#53cc31", &color); //green color
+        //gtk_widget_modify_text(wid, GTK_STATE_NORMAL, &color);
+
     }
 
     gtk_widget_destroy(dlg);
@@ -354,6 +366,51 @@ void decr_seq_num(GtkWidget* wid, gpointer ptr)
 
 void add_new_room(GtkWidget* wid, gpointer ptr)
 {
+    ////////////////////////
+    /* 1st Implementation */
+
+    //Room room = {
+	//    gtk_entry_new(),
+	//    gtk_button_new_with_label("Del"),
+	//    gtk_entry_new(),
+	//    gtk_button_new_with_label("Decr"),
+	//    gtk_button_new_with_label("Ticket")
+    //};
+
+    //insertRoom(roomsOfSect[curSect], &room);
+    //insertRoom(roomsOfSect, &room);
+    
+    //insertRoom(roomsOfSect, &room, curSect, sectRoomRear, sectRoomItemCount);
+    //insertRoom(roomsOfSect, room, curSect, sectRoomRear, sectRoomItemCount);
+
+    //gtk_widget_set_size_request(room.roomNum, -1, 100);
+    //gtk_widget_set_size_request(room.delRoomBtn, -1, 100);
+    //gtk_widget_set_size_request(room.seqNum, -1, 100);
+    //gtk_widget_set_size_request(room.decrSeqBtn, -1, 100);
+    //gtk_widget_set_size_request(room.printTicket, -1, 100);
+ 
+    //uint8_t rowStart = roomRowInfos[curSect]->rowStart;
+    //uint8_t rowEnd = roomRowInfos[curSect]->rowEnd;
+
+    //GtkWidget* tbl = (GtkWidget*)ptr;
+
+    //gtk_table_attach(GTK_TABLE(tbl), room.roomNum, 0,2,rowStart,rowEnd,
+	//	    GTK_EXPAND|GTK_FILL, GTK_SHRINK, 0,0);
+    //gtk_table_attach(GTK_TABLE(tbl), room.delRoomBtn, 2,3,rowStart,rowEnd,
+	//	    GTK_EXPAND|GTK_FILL, GTK_SHRINK, 0,0);
+    //gtk_table_attach(GTK_TABLE(tbl), room.seqNum, 3,4,rowStart,rowEnd,
+	//	    GTK_EXPAND|GTK_FILL, GTK_SHRINK, 0,0);
+    //gtk_table_attach(GTK_TABLE(tbl), room.decrSeqBtn, 4,5,rowStart,rowEnd,
+	//	    GTK_EXPAND|GTK_FILL, GTK_SHRINK, 0,0);
+    //gtk_table_attach(GTK_TABLE(tbl), room.printTicket, 5,6,rowStart,rowEnd,
+	//	    GTK_EXPAND|GTK_FILL, GTK_SHRINK, 0,0);
+
+    //roomRowInfos[curSect]->rowStart++;
+    //roomRowInfos[curSect]->rowEnd++;
+
+    //gtk_widget_show_all(tbl);
+
+
     ////////////////////////
     /* 2nd Implementation */
 
@@ -471,78 +528,27 @@ void print_ticket_auto(GtkWidget* wid, gpointer ptr)
 
 void update_cur_sect(GtkWidget* wid, gpointer ptr)
 {
+    if(gtk_button_get_relief(GTK_BUTTON(wid))==GTK_RELIEF_NORMAL) {
+        gtk_button_set_relief(GTK_BUTTON(wid), GTK_RELIEF_NONE);
+    } else {
+        gtk_button_set_relief(GTK_BUTTON(wid), GTK_RELIEF_NORMAL);
+    }
+
     // Update curSect
     GtkButton* selectedSectBtn = GTK_BUTTON(wid);
     const char* selectedSectBtnLbl = gtk_button_get_label(selectedSectBtn);
     for(uint8_t n=getSectFront();n<sizeSect();n++) {
         const char* sectBtnLbl = gtk_button_get_label(sections[n]);
 	if(strcmp(sectBtnLbl, selectedSectBtnLbl)==0) {
-            //If delSection btn is ON,then delete this section
-            if(gtk_button_get_relief(GTK_BUTTON(delSection))==GTK_RELIEF_NORMAL) {
-                //=======================
-		//    Delete Section
-		//=======================
+            if(curSect == n) break;
 
-		/* Delete Confirmation Dialog */
-                GtkWidget* dlg = gtk_dialog_new_with_buttons(
-		                     "",
-		                     GTK_WINDOW(win),
-		                     GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-		                     "Yes", 1, "No", 0, NULL);
-                GtkWidget* lbl = gtk_label_new("Delete this section?");
-                gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area(
-				        GTK_DIALOG(dlg))), lbl);
-                gtk_widget_show_all(lbl);
-                int result = gtk_dialog_run(GTK_DIALOG(dlg));
-                if(result == 0) {
-                    gtk_widget_destroy(dlg);
-                    return; //user clicked 'No' btn.
-                } else {
-                    gtk_widget_destroy(dlg);
-                }
-
-		/* Begin Section Deletion */
-		if(n==curSect) {
-		    //we clicked on same section already in viewport
-                    gtk_container_remove(GTK_CONTAINER(vport), roomsOfSect2[n]); 
-                } else {
-		    //we clicked on a section not in viewport
-	            gtk_container_forall(GTK_CONTAINER(roomsOfSect2[n]), clear_tbl_perma,
-				    roomsOfSect2[n]);
-		    //remove the section which is already in viewport but keep a reference
-                    g_object_ref(roomsOfSect2[curSect]);
-                    gtk_container_remove(GTK_CONTAINER(vport), roomsOfSect2[curSect]); 
-		}
-		//recreate a new table to replace the earlier one we removed
-                roomsOfSect2[n] = gtk_table_new(10,7,FALSE);
-                gtk_table_set_row_spacings(GTK_TABLE(roomsOfSect2[n]), 50);
-                gtk_table_set_col_spacings(GTK_TABLE(roomsOfSect2[n]), 1);
-
-		//remove the section entry in our bookeeping structure
-		removeSectByIdx(sections, n);
-
-	        //update currently selected sect. Set it to zero
-                curSect = 0;
-                gtk_container_add(GTK_CONTAINER(vport), roomsOfSect2[curSect]);
-                gtk_widget_show_all(roomsOfSect2[curSect]);
-	        break;
-
-            } else {
-		//=======================
-		//    Update curSect
-		//=======================
-                if(n == curSect) break;/* we selected the same section btn */
-
-                g_object_ref(roomsOfSect2[curSect]);
-                gtk_container_remove(GTK_CONTAINER(vport), roomsOfSect2[curSect]); 
-	        //update currently selected sect
-	        curSect = n; 	    
-                gtk_container_add(GTK_CONTAINER(vport), roomsOfSect2[curSect]);
-                gtk_widget_show_all(roomsOfSect2[curSect]);
-	        break;
-            }
-
-            
+            g_object_ref(roomsOfSect2[curSect]);
+            gtk_container_remove(GTK_CONTAINER(vport), roomsOfSect2[curSect]); 
+	    //update currently selected sect
+	    curSect = n; 	    
+            gtk_container_add(GTK_CONTAINER(vport), roomsOfSect2[curSect]);
+            gtk_widget_show_all(roomsOfSect2[curSect]);
+	    break;
 	}
     }
 
@@ -557,6 +563,8 @@ void update_cur_sect(GtkWidget* wid, gpointer ptr)
             gtk_button_set_image(sections[n], NULL);
 	}
     }
+
+    //reprint_rooms_tbl();
 }
 
 void add_new_section(GtkWidget* wid, gpointer ptr)
@@ -613,8 +621,6 @@ void add_new_section(GtkWidget* wid, gpointer ptr)
     }
 
     // Create a button representing a section
-    gtk_button_set_relief(GTK_BUTTON(delSection), GTK_RELIEF_NONE);
-
     GtkWidget* sect = gtk_button_new_with_label(sectName);
     g_signal_connect(sect, "clicked", G_CALLBACK(update_cur_sect), NULL);
 
@@ -719,11 +725,13 @@ void main(int argc, char *argv[])
 
     // Signals Setup
     g_signal_connect(win, "delete-event", G_CALLBACK(close_program), NULL);
+    //g_signal_connect(newRoom, "clicked", G_CALLBACK(add_new_room), tbl);
     g_signal_connect(newRoom, "clicked", G_CALLBACK(add_new_room), NULL);
     g_signal_connect(newSection, "clicked", G_CALLBACK(add_new_section), vbox3);
     g_signal_connect(printTicketAuto, "clicked", G_CALLBACK(print_ticket_auto), NULL);
     g_signal_connect(delSection, "clicked", G_CALLBACK(toggle_del_section_btn), NULL);
      
+    
     gtk_widget_show_all(win);
     gtk_widget_hide(GTK_WIDGET(hiddenEntry));
     gtk_main();

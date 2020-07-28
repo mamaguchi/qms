@@ -638,6 +638,11 @@ void add_new_section(GtkWidget* wid, gpointer ptr)
     update_cur_sect(sect, NULL);
 }
 
+void shutdown(GtkWidget* wid, gpointer ptr)
+{
+    system("poweroff");	  	
+}
+
 void main(int argc, char *argv[])
 {
     gtk_init(&argc, &argv);
@@ -694,6 +699,10 @@ void main(int argc, char *argv[])
     debugLbl = gtk_label_new("");
     gtk_box_pack_start(GTK_BOX(vbox1), debugLbl, FALSE, FALSE, 0);
 
+    // Shutdown Button
+    GtkWidget* shutdownBtn = gtk_button_new_with_label("Shutdown");
+    gtk_box_pack_start(GTK_BOX(vbox1), shutdownBtn, FALSE, FALSE, 0);
+
     // Hidden Entry
     hiddenEntry = gtk_entry_new();
     gtk_box_pack_start(GTK_BOX(vbox1), hiddenEntry, FALSE, FALSE, 0);
@@ -728,6 +737,7 @@ void main(int argc, char *argv[])
     g_signal_connect(newSection, "clicked", G_CALLBACK(add_new_section), vbox3);
     g_signal_connect(printTicketAuto, "clicked", G_CALLBACK(print_ticket_auto), NULL);
     g_signal_connect(delSection, "clicked", G_CALLBACK(toggle_del_section_btn), NULL);
+    g_signal_connect(shutdownBtn, "clicked", G_CALLBACK(shutdown), NULL);
      
     gtk_window_set_decorated(GTK_WINDOW(win), FALSE); /* remove titlebar & window decorations */
     gtk_widget_show_all(win);

@@ -24,10 +24,6 @@ GtkWidget* printTicketAuto;
 
 // Section
 GtkButton* sections[MAX_SECT];
-
-//uint8_t sectRoomFront[] = {0,0,0,0,0};
-//uint8_t sectRoomRear[] = {-1,-1,-1,-1,-1};
-//uint8_t sectRoomItemCount[] = {0,0,0,0,0};
 //uint8_t curSect = 0;
 
 // Debug Label
@@ -38,9 +34,8 @@ GtkWidget* hiddenEntry;
 //Room* roomsOfSect[MAX_ROOM];
 Room* roomsOfSect[MAX_SECT][MAX_ROOM];
 GtkWidget* roomsOfSect2[MAX_SECT];
-//Room roomsOfSect[MAX_SECT][MAX_ROOM];
 RoomRowInfo* roomRowInfos[5];
-//uint8_t curSect = 0;
+uint8_t roomPrintTicketInfos[5];
 
 // Image Assets
 //GtkWidget* sectImg;
@@ -156,6 +151,7 @@ void del_room_row(GtkWidget* wid, gpointer ptr)
 	    gtk_container_remove(GTK_CONTAINER(roomsOfSect2[curSect]), GTK_WIDGET(roomNum->data));
             gtk_table_attach(GTK_TABLE(newTbl), GTK_WIDGET(roomNum->data), 0,2,rowStart,rowEnd, GTK_EXPAND|GTK_FILL, GTK_SHRINK, 0,0);
 
+	    //TODO: reduce firstCellInRowRvrsIdx to self descrement
             firstCellInRowRvrsIdx = (totalRowNum*5-1) - (i*5) - 1;
             GList* delRoomBtn = g_list_nth(roomLst, firstCellInRowRvrsIdx);
             g_object_ref(delRoomBtn->data);
@@ -255,8 +251,8 @@ void edit_room_num(GtkWidget* wid, gpointer ptr)
 
 	//TODO:
 	//GdkColor color;
-        //gdk_color_parse("#ff0000", &color); //red color
-        //gtk_widget_modify_fg(wid, GTK_STATE_NORMAL, &color);
+        //gdk_color_parse("#53cc31", &color); //green color
+        //gtk_widget_modify_text(wid, GTK_STATE_NORMAL, &color);
 
     }
 
@@ -418,6 +414,7 @@ void add_new_room(GtkWidget* wid, gpointer ptr)
     ////////////////////////
     /* 2nd Implementation */
 
+    //Check if there exist any section before adding a room
     if(getSectItemCount() == 0) {
         GtkWidget* dlg = gtk_dialog_new_with_buttons(
 	    	        "",
@@ -436,24 +433,19 @@ void add_new_room(GtkWidget* wid, gpointer ptr)
 	return;
     }
 
+    //Create a new room
     GtkWidget* roomNum = gtk_entry_new();
     GtkWidget* delRoomBtn = gtk_button_new_with_label("Del");
     GtkWidget* seqNum = gtk_entry_new();
     GtkWidget* decrSeqBtn = gtk_button_new_with_label("Decr");
     GtkWidget* printTicket = gtk_button_new_with_label("Ticket");
-
+    
     gtk_widget_set_size_request(roomNum, -1, 100);
     gtk_widget_set_size_request(delRoomBtn, -1, 100);
     gtk_widget_set_size_request(seqNum, -1, 100);
     gtk_widget_set_size_request(decrSeqBtn, -1, 100);
     gtk_widget_set_size_request(printTicket, -1, 100);
-
-    //gtk_editable_set_editable(GTK_EDITABLE(seqNum), FALSE); //WORKED to disable editability
-    //gtk_widget_set_sensitive(GTK_WIDGET(roomNum), TRUE);
-    //gtk_widget_set_sensitive(GTK_WIDGET(seqNum), TRUE);
-    //gtk_widget_set_sensitive(GTK_WIDGET(printTicket), FALSE);
-    //gtk_widget_set_sensitive(GTK_WIDGET(editRoom), TRUE);
-    
+        
     uint8_t rowStart = roomRowInfos[curSect]->rowStart;
     uint8_t rowEnd = roomRowInfos[curSect]->rowEnd;
 
@@ -476,9 +468,62 @@ void add_new_room(GtkWidget* wid, gpointer ptr)
     g_signal_connect(roomNum, "focus-in-event", G_CALLBACK(edit_room_num), NULL); 
     g_signal_connect(seqNum, "focus-in-event", G_CALLBACK(edit_seq_num), NULL); 
 
-    //gtk_container_remove(GTK_CONTAINER(vport), tbl);
-    //gtk_container_add(GTK_CONTAINER(vport), roomsOfSect2[curSect]);
     gtk_widget_show_all(roomsOfSect2[curSect]);
+}
+
+void print_ticket_auto(GtkWidget* wid, gpointer ptr)
+{ 
+    GList* roomLst = gtk_container_get_children(GTK_CONTAINER(roomsOfSect2[curSect]));
+    
+    uint8_t roomRowCountCurSect = roomRowInfos[curSect]->rowStart;
+    if(roomRowCountCurSect==0) return;
+
+    int roomRowToPrintTicket = roomPrintTicketInfos[curSect];
+    int prevRoomRow = -1;
+    if(roomRowCountCurSect > 1) {
+	if((roomRowToPrintTicket-1)<0) {
+            prevRoomRow = roomRowCountCurSect-1;
+	} else {
+            prevRoomRow = roomRowToPrintTicket-1;
+	}
+    }
+        
+    int firstCellInRoomRowPrntTicRvrsIdx = (roomRowCountCurSect*5-1) - (roomRowToPrintTicket*5);
+    GList* roomNumPrntTicLst = g_list_nth(roomLst, firstCellInRoomRowPrntTicRvrsIdx);
+    GList* seqNumPrntTicLst = g_list_nth(roomLst, firstCellInRoomRowPrntTicRvrsIdx-2);
+
+    //Adjust Sequence Number
+    const char* seqNumStr = gtk_entry_get_text(GTK_ENTRY(seqNumPrntTicLst->data));
+    int seqNumInt = -1;
+    if(strcmp(seqNumStr,"\0")==0 || strcmp(seqNumStr,"0\0")==0) {
+        seqNumInt = 1;
+    } else {
+        seqNumInt = atoi(seqNumStr);
+        seqNumInt++;
+    }
+    char strBuf[10];
+    sprintf(strBuf, "%d", seqNumInt);
+    gtk_entry_set_text(GTK_ENTRY(seqNumPrntTicLst->data), strBuf);
+    
+    //TODO:Print Ticket
+    
+    //Adjust Room Number Color
+    GdkColor color;
+    gdk_color_parse("#53cc31", &color); //green color
+    gtk_widget_modify_text(GTK_WIDGET(roomNumPrntTicLst->data), GTK_STATE_NORMAL, &color);
+    gtk_widget_modify_text(GTK_WIDGET(seqNumPrntTicLst->data), GTK_STATE_NORMAL, &color);
+    if(prevRoomRow!=-1) {/* change prev row, if present, back to normal color */
+        int firstCellInPrevRoomRowRvrsIdx = (roomRowCountCurSect*5-1) - (prevRoomRow*5);
+        GList* roomNumPrevRowLst = g_list_nth(roomLst, firstCellInPrevRoomRowRvrsIdx);
+        GList* seqNumPrevRowLst = g_list_nth(roomLst, firstCellInPrevRoomRowRvrsIdx-2);
+        gtk_widget_modify_text(GTK_WIDGET(roomNumPrevRowLst->data), GTK_STATE_NORMAL, NULL);
+        gtk_widget_modify_text(GTK_WIDGET(seqNumPrevRowLst->data), GTK_STATE_NORMAL, NULL);
+    }
+
+    //Adjust roomPrintTicketInfos sequence
+    roomPrintTicketInfos[curSect] = (roomPrintTicketInfos[curSect]+1) % roomRowCountCurSect;
+
+    g_list_free(roomLst);
 }
 
 void update_cur_sect(GtkWidget* wid, gpointer ptr)
@@ -659,6 +704,13 @@ void main(int argc, char *argv[])
     roomRowInfos[3] = &rowInfoSect4;
     roomRowInfos[4] = &rowInfoSect5;
 
+    //Initialize Room PrintTicket Info for Each Section
+    roomPrintTicketInfos[0] = 0;
+    roomPrintTicketInfos[1] = 0;
+    roomPrintTicketInfos[2] = 0;
+    roomPrintTicketInfos[3] = 0;
+    roomPrintTicketInfos[4] = 0;
+
     // Toplevel Windows Setup
     gtk_window_set_title(GTK_WINDOW(win), "QMS App");
     gtk_widget_set_size_request(win, 800, 600);
@@ -669,6 +721,7 @@ void main(int argc, char *argv[])
     g_signal_connect(newRoom, "clicked", G_CALLBACK(add_new_room), NULL);
     g_signal_connect(newSection, "clicked", G_CALLBACK(add_new_section), vbox3);
     //g_signal_connect(editRoom, "clicked", G_CALLBACK(toggle_edit_room_button), NULL);
+    g_signal_connect(printTicketAuto, "clicked", G_CALLBACK(print_ticket_auto), NULL);
      
     
     gtk_widget_show_all(win);

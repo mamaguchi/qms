@@ -34,6 +34,11 @@ uint8_t sectRoomItemCount[] = {0, 0, 0, 0, 0};
 
 uint8_t curSect = 0;
 
+uint8_t getSectRoomItemCount()
+{
+    return sectRoomItemCount[curSect];
+}
+
 Room* peekRoom(Room* section[], uint8_t curSect, uint8_t sectRoomFront[])
 {
     return section[sectRoomFront[curSect]];

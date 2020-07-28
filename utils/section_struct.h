@@ -15,7 +15,8 @@ uint8_t sectFront = 0;
 uint8_t sectRear = -1;
 uint8_t sectItemCount = 0;
 
-uint8_t getSectItemCount() {
+uint8_t getSectItemCount() 
+{
     return sectItemCount;
 }
 
